@@ -1,8 +1,15 @@
-import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import express from "express";
+import prisma from "./config/prisma";
+import { configDotenv } from "dotenv";
+import { accountRouter } from "./routes";
+
+configDotenv();
 
 const app = express();
-const prisma = new PrismaClient();
+
+app.use(express.json());
+
+app.use("/account", accountRouter);
 
 // Start the server
 const PORT = process.env.PORT || 3000;

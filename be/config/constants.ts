@@ -1,0 +1,1 @@
+export const DEFAULT_AVATAR_URL = 'https://static-00.iconduck.com/assets.00/user-avatar-1-icon-2048x2048-935gruik.png'

@@ -14,15 +14,25 @@ import { ICreateAccount } from "../models/account";
 import { signAccessToken, signRefreshToken } from "../utils/jwt";
 import { verifyRefreshToken } from "../middleware/authMiddleware";
 import { handleRefreshToken } from "./refreshToken";
+import { sendWelcomeEmail } from "../utils/mailer";
 
 const router = Router();
 
-router.get("/", async (req, res) => {
-  const accounts = await getAllAccounts();
-  res.json(accounts);
+router.get("/", async (req, res): Promise<any> => {
+  try {
+    const accounts = await getAllAccounts();
+    if (!accounts || accounts.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy danh sách tài khoản" });
+    }
+    return res.status(200).json(accounts);
+  } catch (err: any) {
+    return res.status(500).json({ message: "Lỗi máy chủ" });
+  }
 });
 
-router.post("/create", createAccountValidator, async (req, res) => {
+router.post("/create", createAccountValidator, async (req: any, res: any) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
@@ -33,15 +43,18 @@ router.post("/create", createAccountValidator, async (req, res) => {
 
   try {
     const newAccount = await createAccount(data);
-    return res
-      .status(201)
-      .json({ message: "Tạo tài khoản thành công!", data: newAccount });
+    if (newAccount) {
+      sendWelcomeEmail(newAccount.email, newAccount.username);
+      return res
+        .status(201)
+        .json({ message: "Tạo tài khoản thành công!", data: newAccount });
+    }
   } catch (err: any) {
     return res.status(400).json({ error: err.message });
   }
 });
 
-router.post("/login", loginValidator, async (req, res) => {
+router.post("/login", loginValidator, async (req: any, res: any) => {
   const error = validationResult(req);
   if (!error.isEmpty()) {
     return res.status(400).json({ errors: error.array() });

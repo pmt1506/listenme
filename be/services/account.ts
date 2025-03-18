@@ -1,21 +1,14 @@
-import prisma from "../config/prisma";
 import bcrypt from "bcrypt";
 import { ICreateAccount } from "../models/account";
+import Account from "../models/account";
+import User from "../models/user";
 import { DEFAULT_AVATAR_URL } from "../config/constants";
 
 export const getAllAccounts = async () => {
   try {
-    const accounts = await prisma.account.findMany({
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        user: true,
-      },
-    });
-    if (!accounts) {
-      throw new Error("Không tìm thấy danh sách tài khoản");
-    }
+    const accounts = await Account.find()
+      .select("id username email user")
+      .populate("user", "name avatar joinedDate");
     return accounts;
   } catch (error) {
     console.error("Lỗi khi lấy danh sách tài khoản:", error);
@@ -33,10 +26,8 @@ export const createAccount = async (data: ICreateAccount) => {
     throw new Error("Mật khẩu và xác nhận mật khẩu không khớp");
   }
 
-  const existingAccount = await prisma.account.findFirst({
-    where: {
-      OR: [{ username: username }, { email: email }],
-    },
+  const existingAccount = await Account.findOne({
+    $or: [{ username: username }, { email: email }],
   });
 
   if (existingAccount) {
@@ -48,33 +39,37 @@ export const createAccount = async (data: ICreateAccount) => {
     }
   }
 
-  const newPassword = await bcrypt.hash(password, 10);
-  const newAccount = await prisma.account.create({
-    data: {
-      username,
-      password: newPassword,
-      email,
-      user: {
-        create: {
-          name: username,
-          avatar: DEFAULT_AVATAR_URL,
-        },
-      },
-    },
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Create User document
+  const newUser = new User({
+    name: username,
+    avatar: DEFAULT_AVATAR_URL,
   });
 
-  return newAccount;
+  await newUser.save();
+
+  // Create Account document
+  const newAccount = new Account({
+    username,
+    email,
+    password: hashedPassword,
+    user: newUser._id,
+  });
+
+  await newAccount.save();
+
+  return await newAccount.populate("user", "name avatar joinedDate");
 };
 
 export const findAccountByEmailOrUsername = async (
-  email: string,
-  username: string
+  email?: string,
+  username?: string
 ) => {
-  const account = await prisma.account.findFirst({
-    where: {
-      OR: [{ email: email }, { username: username }],
-    },
+  const account = await Account.findOne({
+    $or: [{ email: email }, { username: username }],
   });
+
   if (!account) {
     throw new Error(
       "Không tìm thấy tài khoản với email hoặc tên đăng nhập này"

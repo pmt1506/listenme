@@ -28,8 +28,6 @@
   },
   "scripts": {
     "dev": "tsx watch server.js",
-    "start": "node server.js",
-    "prisma:generate": "prisma generate",
-    "prisma:push": "prisma db push"
+    "start": "node server.js"
   }
 }

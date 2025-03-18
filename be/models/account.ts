@@ -18,7 +18,7 @@ export interface ICreateAccount extends Document {
 const AccountSchema = new Schema<IAccount>({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: { type: String },
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 });
 

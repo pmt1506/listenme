@@ -85,3 +85,33 @@ export const findAccountByEmail = async (email: string) => {
   }
   return account;
 };
+
+export const createAccountFromGoogle = async ({
+  username,
+  email,
+  displayName,
+  avatar,
+}: {
+  username: string;
+  email: string;
+  displayName: string;
+  avatar: string;
+}) => {
+  const existingAccount = await Account.findOne({
+    $or: [{ username: username }, { email: email }],
+  });
+  if (existingAccount) {
+    return existingAccount;
+  }
+  const newUser = await User.create({
+    name: displayName,
+    avatar: avatar || DEFAULT_AVATAR_URL,
+  });
+  const account = await Account.create({
+    username,
+    email,
+    password: "",
+    user: newUser._id,
+  });
+  return account;
+};

@@ -1,10 +1,14 @@
 import { configDotenv } from "dotenv";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import passport from "passport";
-import { findAccountByEmail } from "../services";
+import {
+  createAccountFromGoogle,
+  findAccountByEmail,
+} from "../services/account";
 
 configDotenv();
 
+// passport config
 passport.use(
   new GoogleStrategy(
     {
@@ -14,19 +18,25 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const userData = {
-          googleId: profile.id,
-          displayName: profile.displayName,
-          email: profile.emails?.[0].value,
-          avatar: profile.photos?.[0].value,
-        };
-        const existedAccount = await findAccountByEmail(userData.email!);
-        if (existedAccount) {
-          done(null, {
-            id: profile.id,
-            username: existedAccount.username,
+        const email = profile.emails?.[0].value;
+        if (!email)
+          return done(new Error("Email not provided by Google"), false);
+
+        let account = await findAccountByEmail(email).catch(() => null);
+
+        if (!account) {
+          account = await createAccountFromGoogle({
+            username: `user-${profile.id}`,
+            email: email,
+            displayName: profile.displayName,
+            avatar: profile.photos?.[0].value || "",
           });
         }
+
+        done(null, {
+          id: account.id,
+          username: account.username,
+        });
       } catch (err) {
         done(err, false);
       }

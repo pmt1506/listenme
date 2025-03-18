@@ -77,3 +77,11 @@ export const findAccountByEmailOrUsername = async (
   }
   return account;
 };
+
+export const findAccountByEmail = async (email: string) => {
+  const account = await Account.findOne({ email }).populate("user");
+  if (!account) {
+    throw new Error("Không tìm thấy tài khoản với email này");
+  }
+  return account;
+};

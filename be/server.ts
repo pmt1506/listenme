@@ -3,6 +3,7 @@ import { configDotenv } from "dotenv";
 import accountRouter from "./routes/account";
 import googleAuthRouter from "./routes/googleAuth";
 import spotifyAuthRouter from "./routes/spotifyAuth";
+import spotifyPublicRouter from "./routes/spotifyPublic";
 import mongoose from "mongoose";
 import session from "express-session";
 import passport from "passport";
@@ -29,6 +30,9 @@ app.use(express.json());
 app.use("/account", accountRouter);
 app.use("/auth/google", googleAuthRouter);
 app.use("/auth/spotify", spotifyAuthRouter); // Use the Spotify routes
+
+// Spotify routes
+app.use("/spotify/public", spotifyPublicRouter);
 
 const PORT = process.env.PORT || 9999;
 const MONGO_URI = process.env.DATABASE_URL!;

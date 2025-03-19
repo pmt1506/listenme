@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import { signAccessToken } from "../utils/jwt";
+import axios from "axios";
+import { configDotenv } from "dotenv";
 
+configDotenv()
 
 export const handleRefreshToken = async (
   req: Request,
@@ -29,4 +32,32 @@ export const handleRefreshToken = async (
     res.status(500).json({ message: "Lỗi khi làm mới access token" });
     return;
   }
+};
+
+export const refreshSpotifyToken = async (refreshToken: string) => {
+  const { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET } = process.env;
+
+  const params = new URLSearchParams();
+  params.append("grant_type", "refresh_token");
+  params.append("refresh_token", refreshToken);
+
+  const response = await axios.post(
+    "https://accounts.spotify.com/api/token",
+    params,
+    {
+      headers: {
+        Authorization:
+          "Basic " +
+          Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString(
+            "base64"
+          ),
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    }
+  );
+
+  return {
+    accessToken: response.data.access_token,
+    expiresIn: response.data.expires_in,
+  };
 };

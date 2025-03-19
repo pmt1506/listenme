@@ -55,6 +55,7 @@ export const createAccount = async (data: ICreateAccount) => {
     email,
     password: hashedPassword,
     user: newUser._id,
+    provider: "local"
   });
 
   await newAccount.save();
@@ -112,6 +113,7 @@ export const createAccountFromGoogle = async ({
     email,
     password: "",
     user: newUser._id,
+    provider: "google",
   });
   return account;
 };

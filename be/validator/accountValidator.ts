@@ -32,7 +32,7 @@ export const loginValidator = [
     .notEmpty()
     .withMessage("Tài khoản (username/email) không được để trống")
     .bail()
-    .isLength({ min: 6 })
+    .isLength({ min: 1 })
     .withMessage("Tài khoản phải có ít nhất 6 ký tự")
     .bail()
     .isString()

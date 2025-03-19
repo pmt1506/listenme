@@ -72,12 +72,13 @@ router.post("/login", loginValidator, async (req: any, res: any) => {
     if (!existedAccount) {
       return res.status(404).json({ message: "Tài khoản không tồn tại!" });
     }
-    if (!(await bcrypt.compare(password, existedAccount.password))) {
+    if (!(await bcrypt.compare(password, existedAccount.password!))) {
       return res.status(400).json({ message: "Mật khẩu không đúng!" });
     }
     const accessToken = signAccessToken({
       id: existedAccount.id,
       username: existedAccount.username,
+      userId: existedAccount.user._id
     });
     const refreshToken = signRefreshToken({
       id: existedAccount.id,

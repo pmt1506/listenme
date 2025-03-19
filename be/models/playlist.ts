@@ -3,9 +3,16 @@ import { IUser } from "./user";
 
 export interface IPlaylist extends Document {
   name: string;
-  description: string;
+  description?: string;
   user: mongoose.Types.ObjectId | IUser;
   tracks: mongoose.Types.ObjectId[]; // Referencing track documents
+}
+
+export interface ICreatePlaylist extends Document {
+  name: string;
+  description?: string;
+  user: mongoose.Types.ObjectId | IUser;
+  tracks: mongoose.Types.ObjectId[];
 }
 
 const PlaylistSchema = new Schema<IPlaylist>({

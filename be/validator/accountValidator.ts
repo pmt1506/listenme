@@ -32,9 +32,6 @@ export const loginValidator = [
     .notEmpty()
     .withMessage("Tài khoản (username/email) không được để trống")
     .bail()
-    .isLength({ min: 1 })
-    .withMessage("Tài khoản phải có ít nhất 6 ký tự")
-    .bail()
     .isString()
     .withMessage("Tài khoản không hợp lệ"),
   body("password").notEmpty().withMessage("Mật khẩu không được để trống"),

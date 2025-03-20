@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
   createAccount,
-  getAllAccounts,
   requestEmailUpdate,
   updateEmail,
   updatePassword,
@@ -18,23 +17,41 @@ import { sendWelcomeEmail } from "../services/mailer";
 
 const router = Router();
 
-router.get("/", async (req: any, res: any): Promise<any> => {
-  try {
-    const accounts = await getAllAccounts();
-    if (!accounts || accounts.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "Không tìm thấy danh sách tài khoản" });
-    }
-    return res.status(200).json(accounts);
-  } catch (err: any) {
-    return res.status(500).json({ message: "Lỗi máy chủ" });
-  }
-});
-
+/**
+ * @openapi
+ * /account/create:
+ *   post:
+ *     summary: Tạo tài khoản mới
+ *     tags:
+ *       - Account
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - email
+ *               - password
+ *               - confirmPassword
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               confirmPassword:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Tạo tài khoản thành công
+ *       400:
+ *         description: Lỗi dữ liệu đầu vào
+ */
 router.post("/create", createAccountValidator, async (req: any, res: any) => {
   const errors = validationResult(req);
-
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
@@ -54,9 +71,23 @@ router.post("/create", createAccountValidator, async (req: any, res: any) => {
   }
 });
 
+/**
+ * @openapi
+ * /account/request-otp:
+ *   post:
+ *     summary: Gửi OTP về email của tài khoản
+ *     tags:
+ *       - Account
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: OTP đã được gửi
+ *       400:
+ *         description: Lỗi không hợp lệ
+ */
 router.post("/request-otp", verifyAccessToken, async (req: any, res: any) => {
   const id = req.user.id;
-
   try {
     const result = await requestEmailUpdate(id);
     return res.status(200).json(result);
@@ -65,6 +96,35 @@ router.post("/request-otp", verifyAccessToken, async (req: any, res: any) => {
   }
 });
 
+/**
+ * @openapi
+ * /account/change-email:
+ *   patch:
+ *     summary: Cập nhật email mới
+ *     tags:
+ *       - Account
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - newEmail
+ *               - otp
+ *             properties:
+ *               newEmail:
+ *                 type: string
+ *               otp:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Cập nhật email thành công
+ *       400:
+ *         description: Lỗi OTP hoặc email không hợp lệ
+ */
 router.patch(
   "/change-email",
   verifyAccessToken,
@@ -76,7 +136,6 @@ router.patch(
     }
 
     const id = req.user.id;
-
     const { newEmail, otp } = matchedData(req);
 
     try {
@@ -90,6 +149,35 @@ router.patch(
   }
 );
 
+/**
+ * @openapi
+ * /account/change-password:
+ *   put:
+ *     summary: Cập nhật mật khẩu
+ *     tags:
+ *       - Account
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *               - confirmPassword
+ *             properties:
+ *               password:
+ *                 type: string
+ *               confirmPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Cập nhật mật khẩu thành công
+ *       400:
+ *         description: Lỗi xác thực hoặc dữ liệu đầu vào
+ */
 router.put(
   "/change-password",
   verifyAccessToken,
@@ -101,7 +189,6 @@ router.put(
     }
 
     const id = req.user.id;
-
     const { password, confirmPassword } = matchedData(req);
 
     try {

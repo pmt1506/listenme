@@ -12,6 +12,7 @@ import session from "express-session";
 import passport from "passport";
 import "./utils/google";
 import "./utils/spotify";
+import { setupSwagger } from "./utils/swagger";
 
 configDotenv();
 
@@ -26,13 +27,15 @@ app.use(
   })
 );
 
+setupSwagger(app);
+
 app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('/auth', authRouter)
+app.use("/auth", authRouter);
 app.use("/auth/google", googleAuthRouter);
 app.use("/auth/spotify", spotifyAuthRouter); // Use the Spotify routes
 
@@ -40,7 +43,7 @@ app.use("/auth/spotify", spotifyAuthRouter); // Use the Spotify routes
 app.use("/spotify/public", spotifyPublicRouter);
 
 app.use("/account", accountRouter);
-app.use('/user', userRouter)
+app.use("/user", userRouter);
 
 const PORT = process.env.PORT || 9999;
 const MONGO_URI = process.env.DATABASE_URL!;

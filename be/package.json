@@ -12,6 +12,8 @@
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/passport-spotify": "^2.0.4",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   },
@@ -36,7 +38,9 @@
     "passport-google-oauth20": "^2.0.0",
     "passport-spotify": "^2.0.0",
     "querystring": "^0.2.1",
-    "spotify-web-api-node": "^5.0.2"
+    "spotify-web-api-node": "^5.0.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "scripts": {
     "dev": "tsx watch server.js",

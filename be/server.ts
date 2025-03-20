@@ -1,6 +1,9 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import { configDotenv } from "dotenv";
 import accountRouter from "./routes/account";
+import userRouter from "./routes/user";
+import authRouter from "./routes/auth";
 import googleAuthRouter from "./routes/googleAuth";
 import spotifyAuthRouter from "./routes/spotifyAuth";
 import spotifyPublicRouter from "./routes/spotifyPublic";
@@ -27,12 +30,17 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(express.json());
-app.use("/account", accountRouter);
+app.use(cookieParser());
+
+app.use('/auth', authRouter)
 app.use("/auth/google", googleAuthRouter);
 app.use("/auth/spotify", spotifyAuthRouter); // Use the Spotify routes
 
 // Spotify routes
 app.use("/spotify/public", spotifyPublicRouter);
+
+app.use("/account", accountRouter);
+app.use('/user', userRouter)
 
 const PORT = process.env.PORT || 9999;
 const MONGO_URI = process.env.DATABASE_URL!;

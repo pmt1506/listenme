@@ -1,24 +1,24 @@
-import { Request, Response, Router } from "express";
-import bcrypt from "bcrypt";
+import { Router } from "express";
 import {
   createAccount,
-  findAccountByEmailOrUsername,
   getAllAccounts,
+  requestEmailUpdate,
+  updateEmail,
+  updatePassword,
 } from "../services/account";
 import {
   createAccountValidator,
-  loginValidator,
+  updateEmailValidator,
+  changePasswordValidator,
 } from "../validator/accountValidator";
 import { matchedData, validationResult } from "express-validator";
 import { ICreateAccount } from "../models/account";
-import { signAccessToken, signRefreshToken } from "../utils/jwt";
-import { verifyRefreshToken } from "../middleware/authMiddleware";
-import { handleRefreshToken } from "./refreshToken";
-import { sendWelcomeEmail } from "../utils/mailer";
+import { verifyAccessToken } from "../middleware/authMiddleware";
+import { sendWelcomeEmail } from "../services/mailer";
 
 const router = Router();
 
-router.get("/", async (req, res): Promise<any> => {
+router.get("/", async (req: any, res: any): Promise<any> => {
   try {
     const accounts = await getAllAccounts();
     if (!accounts || accounts.length === 0) {
@@ -54,45 +54,67 @@ router.post("/create", createAccountValidator, async (req: any, res: any) => {
   }
 });
 
-router.post("/login", loginValidator, async (req: any, res: any) => {
-  const error = validationResult(req);
-  if (!error.isEmpty()) {
-    return res.status(400).json({ errors: error.array() });
-  }
-  const { identity, password } = matchedData(req);
+router.post("/request-otp", verifyAccessToken, async (req: any, res: any) => {
+  const id = req.user.id;
 
   try {
-    const isEmail = identity.includes("@");
-
-    const existedAccount = await findAccountByEmailOrUsername(
-      isEmail ? identity : undefined,
-      !isEmail ? identity : undefined
-    );
-
-    if (!existedAccount) {
-      return res.status(404).json({ message: "Tài khoản không tồn tại!" });
-    }
-    if (!(await bcrypt.compare(password, existedAccount.password!))) {
-      return res.status(400).json({ message: "Mật khẩu không đúng!" });
-    }
-    const accessToken = signAccessToken({
-      id: existedAccount.id,
-      username: existedAccount.username,
-      userId: existedAccount.user._id
-    });
-    const refreshToken = signRefreshToken({
-      id: existedAccount.id,
-    });
-    return res.status(200).json({
-      message: "Đăng nhập thành công",
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-    });
-  } catch (e: any) {
-    return res.status(500).json({ message: e.message });
+    const result = await requestEmailUpdate(id);
+    return res.status(200).json(result);
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message });
   }
 });
 
-router.post("/refresh", verifyRefreshToken, handleRefreshToken);
+router.patch(
+  "/change-email",
+  verifyAccessToken,
+  updateEmailValidator,
+  async (req: any, res: any) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const id = req.user.id;
+
+    const { newEmail, otp } = matchedData(req);
+
+    try {
+      const result = await updateEmail(id, newEmail, otp);
+      if (result) {
+        return res.status(200).json({ message: "Cập nhật email thành công" });
+      }
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+);
+
+router.put(
+  "/change-password",
+  verifyAccessToken,
+  changePasswordValidator,
+  async (req: any, res: any) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const id = req.user.id;
+
+    const { password, confirmPassword } = matchedData(req);
+
+    try {
+      const result = await updatePassword(id, password, confirmPassword);
+      if (result) {
+        return res
+          .status(200)
+          .json({ message: "Cập nhật mật khẩu thành công" });
+      }
+    } catch (err: any) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+);
 
 export default router;

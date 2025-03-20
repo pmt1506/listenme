@@ -1,8 +1,10 @@
 import bcrypt from "bcrypt";
-import { ICreateAccount } from "../models/account";
+import { ICreateAccount, IUpdateAccount } from "../models/account";
 import Account from "../models/account";
 import User from "../models/user";
 import { DEFAULT_AVATAR_URL } from "../config/constants";
+import { generateOtp, verifyOtp } from "./redis";
+import { sendOtpEmail } from "./mailer";
 
 export const getAllAccounts = async () => {
   try {
@@ -55,12 +57,73 @@ export const createAccount = async (data: ICreateAccount) => {
     email,
     password: hashedPassword,
     user: newUser._id,
-    provider: "local"
+    provider: "local",
   });
 
   await newAccount.save();
 
   return await newAccount.populate("user", "name avatar joinedDate");
+};
+
+export const requestEmailUpdate = async (id: string) => {
+  const account = await Account.findById(id);
+  if (!account) {
+    throw new Error("Tài khoản không tồn tại");
+  }
+
+  const otp = await generateOtp(id);
+  await sendOtpEmail(account.email, otp);
+
+  return { message: "OTP đã được gửi đến email của bạn" };
+};
+
+export const updateEmail = async (
+  id: string,
+  newEmail: string,
+  otp: string
+) => {
+  const account = await Account.findById(id);
+  if (!account) {
+    throw new Error("Tài khoản không tồn tại");
+  }
+
+  const existedEmail = await Account.findOne({
+    email: newEmail,
+  });
+  if (existedEmail) {
+    throw new Error("Email đã tồn tại");
+  }
+
+  await verifyOtp(id, otp);
+
+  account.email = newEmail;
+  await account.save();
+  return account;
+};
+
+export const updatePassword = async (
+  id: string,
+  password: string,
+  confirmPassword: string
+) => {
+  if (password !== confirmPassword) {
+    throw new Error("Mật khẩu và xác nhận mật khẩu không khớp");
+  }
+
+  const account = await Account.findById(id);
+  if (!account) {
+    throw new Error("Tài khoản không tồn tại");
+  }
+
+  const isMatch = await bcrypt.compare(password, account.password!);
+  if (isMatch) {
+    throw new Error("Mật khẩu mới không được trùng với mật khẩu cũ");
+  }
+
+  const hashedNewPassword = await bcrypt.hash(password, 10);
+  account.password = hashedNewPassword;
+  await account.save();
+  return account;
 };
 
 export const findAccountByEmailOrUsername = async (
@@ -83,6 +146,14 @@ export const findAccountByEmail = async (email: string) => {
   const account = await Account.findOne({ email }).populate("user");
   if (!account) {
     throw new Error("Không tìm thấy tài khoản với email này");
+  }
+  return account;
+};
+
+export const findAccountById = async (id: string) => {
+  const account = await Account.findById(id).populate("user");
+  if (!account) {
+    throw new Error("Không tìm thấy tài khoản với id này");
   }
   return account;
 };

@@ -8,6 +8,13 @@ export interface ICreateAccount extends Document {
   confirmPassword: string;
 }
 
+export interface IUpdateAccount extends Document {
+  id: string;
+  email?: string;
+  password?: string;
+  otp: string;
+}
+
 export interface IAccount extends Document {
   username: string;
   email: string;

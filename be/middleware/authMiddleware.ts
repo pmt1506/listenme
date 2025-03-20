@@ -1,12 +1,14 @@
 import { configDotenv } from "dotenv";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { verifyAccessToken as verifyAccessTokenUtils } from "../utils/jwt";
 
 configDotenv();
 
 interface JwtPayload {
   id: string;
   username: string;
+  userId: string;
 }
 
 const JWT_SECRET = process.env.JWT_SECRET!;
@@ -17,17 +19,18 @@ export const verifyAccessToken = (
   res: Response,
   next: NextFunction
 ): void => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const token = req.cookies.accessToken;
+  if (!token) {
     res.status(401).json({ message: "Không tìm thấy access token!" });
-    return;
   }
 
-  const token = authHeader.split(" ")[1];
-
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    req.user = { id: decoded.id, username: decoded.username };
+    const decoded = verifyAccessTokenUtils(token) as JwtPayload;
+    req.user = {
+      id: decoded.id,
+      username: decoded.username,
+      userId: decoded.userId,
+    };
     next();
   } catch (err) {
     res
@@ -42,7 +45,7 @@ export const verifyRefreshToken = (
   res: Response,
   next: NextFunction
 ): void => {
-  const { refreshToken } = req.body;
+  const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
     res.status(401).json({ message: "Không tìm thấy refresh token!" });
@@ -50,11 +53,12 @@ export const verifyRefreshToken = (
   }
 
   try {
-    const decoded = jwt.verify(
-      refreshToken,
-      JWT_REFRESH_SECRET
-    ) as JwtPayload;
-    req.user = { id: decoded.id, username: decoded.username };
+    const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as JwtPayload;
+    req.user = {
+      id: decoded.id,
+      username: decoded.username,
+      userId: decoded.userId,
+    };
     next();
   } catch (err) {
     res

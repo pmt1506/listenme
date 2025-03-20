@@ -1,26 +1,27 @@
 import { Request, Response } from "express";
-import { signAccessToken } from "../utils/jwt";
+import { signAccessToken, verifyRefreshToken } from "../utils/jwt";
 import axios from "axios";
 import { configDotenv } from "dotenv";
 
-configDotenv()
+configDotenv();
 
 export const handleRefreshToken = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const user = req.user;
-
-    if (!user) {
-      res.status(400).json({ message: "Không tìm thấy thông tin người dùng!" });
-      return;
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      res.status(401).json({ message: "Không tìm thấy refresh token!" });
     }
+
+    const decoded: any = verifyRefreshToken(refreshToken);
 
     // Create new access token
     const newAccessToken = signAccessToken({
-      id: user.id,
-      username: user.username,
+      id: decoded.id,
+      username: decoded.username,
+      userId: decoded.userId,
     });
 
     res.status(200).json({

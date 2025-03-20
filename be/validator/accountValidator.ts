@@ -36,3 +36,24 @@ export const loginValidator = [
     .withMessage("Tài khoản không hợp lệ"),
   body("password").notEmpty().withMessage("Mật khẩu không được để trống"),
 ];
+
+export const updateEmailValidator = [
+  body("newEmail")
+    .isEmail()
+    .withMessage("Email mới không hợp lệ")
+    .notEmpty()
+    .withMessage("Email mới không được để trống"),
+  body("otp")
+    .notEmpty()
+    .withMessage("OTP không được để trống"),
+];
+export const changePasswordValidator = [
+  body("password")
+    .isLength({ min: 6 })
+    .withMessage("Mật khẩu mới phải có ít nhất 6 ký tự")
+    .notEmpty()
+    .withMessage("Mật khẩu mới không được để trống"),
+  body("confirmPassword")
+    .notEmpty()
+    .withMessage("Xác nhận mật khẩu không được để trống"),
+];

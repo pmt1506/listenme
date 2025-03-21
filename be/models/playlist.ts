@@ -14,7 +14,7 @@ export interface ICreatePlaylist extends Document {
   cover: string;
   description?: string;
   user: mongoose.Types.ObjectId | IUser;
-  tracks: mongoose.Types.ObjectId[];
+  tracks?: mongoose.Types.ObjectId[];
 }
 
 const PlaylistSchema = new Schema<IPlaylist>({

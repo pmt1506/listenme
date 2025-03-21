@@ -9,7 +9,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
-export const uploadToCloudinary = async (fileBuffer: Buffer) => {
+export const uploadAvatarCloudinary = async (fileBuffer: Buffer) => {
   return new Promise((resolve, reject) => {
     cloudinary.uploader
       .upload_stream({ folder: "avatars" }, (err, result) => {
@@ -19,6 +19,17 @@ export const uploadToCloudinary = async (fileBuffer: Buffer) => {
       .end(fileBuffer);
   });
 };
+
+export const uploadPlaylistCoverCloudinary = async (fileBuffer: Buffer) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader
+     .upload_stream({ folder: "playlist-covers" }, (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      })
+     .end(fileBuffer);
+  });
+}
 
 export const extractPublicId = (url: string) => {
   const parts = url.split("/");

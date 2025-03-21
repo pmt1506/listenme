@@ -4,7 +4,7 @@ import User from "../models/user";
 import { verifyAccessToken } from "../middleware/authMiddleware";
 import cloudinary, {
   extractPublicId,
-  uploadToCloudinary,
+  uploadAvatarCloudinary,
 } from "../utils/cloudinary";
 
 const router = Router();
@@ -31,7 +31,7 @@ router.patch(
           .json({ message: "Không có file nào được upload" });
       }
 
-      const result: any = await uploadToCloudinary(req.file.buffer);
+      const result: any = await uploadAvatarCloudinary(req.file.buffer);
 
       // Optional: delete old avatar from Cloudinary (if stored as a Cloudinary URL)
       if (user.avatar && user.avatar.includes("res.cloudinary.com")) {

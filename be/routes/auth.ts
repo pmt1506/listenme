@@ -2,7 +2,7 @@ import { matchedData, validationResult } from "express-validator";
 import { verifyRefreshToken } from "../middleware/authMiddleware";
 import { handleRefreshToken } from "./refreshToken";
 import { Router } from "express";
-import bcrypt from 'bcrypt';
+import bcrypt from "bcrypt";
 import { loginValidator } from "../validator/accountValidator";
 import { findAccountByEmailOrUsername } from "../services/account";
 import { signAccessToken, signRefreshToken } from "../utils/jwt";
@@ -38,6 +38,13 @@ router.post("/login", loginValidator, async (req: any, res: any) => {
     const refreshToken = signRefreshToken({
       id: existedAccount.id,
     });
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: 15 * 60 * 1000,
+    });
     res
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -47,7 +54,6 @@ router.post("/login", loginValidator, async (req: any, res: any) => {
       })
       .status(200)
       .json({
-        accessToken: accessToken,
         message: "Đăng nhập thành công!",
       });
   } catch (e: any) {
@@ -58,14 +64,20 @@ router.post("/login", loginValidator, async (req: any, res: any) => {
 router.post("/refresh", verifyRefreshToken, handleRefreshToken);
 
 router.post("/logout", (req: any, res: any) => {
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // only true in production with HTTPS
-      sameSite: "strict",
-      path: "/auth/refresh", // Match the path you used when setting the cookie
-    });
-  
-    return res.status(200).json({ message: "Đăng xuất thành công!" });
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/",
   });
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/auth/refresh",
+  });
+
+  return res.status(200).json({ message: "Đăng xuất thành công!" });
+});
 
 export default router;

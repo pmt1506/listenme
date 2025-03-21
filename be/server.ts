@@ -4,6 +4,7 @@ import { configDotenv } from "dotenv";
 import accountRouter from "./routes/account";
 import userRouter from "./routes/user";
 import authRouter from "./routes/auth";
+import playlistRouter from "./routes/playlist";
 import googleAuthRouter from "./routes/googleAuth";
 import spotifyAuthRouter from "./routes/spotifyAuth";
 import spotifyPublicRouter from "./routes/spotifyPublic";
@@ -44,6 +45,7 @@ app.use("/spotify/public", spotifyPublicRouter);
 
 app.use("/account", accountRouter);
 app.use("/user", userRouter);
+app.use('/playlist', playlistRouter)
 
 const PORT = process.env.PORT || 9999;
 const MONGO_URI = process.env.DATABASE_URL!;
